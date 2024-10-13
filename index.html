@@ -193,8 +193,7 @@
         }
 
         let currentCanvasIndex = 0;
-        let typingTimer;
-        const typingDelay = 1000; // 1 second delay
+        // Removed typingTimer and typingDelay
 
         const hoverSound = new Audio('Hover.wav');
         const clickSound = new Audio('click.mp3');
@@ -225,11 +224,12 @@
         }
 
         function translateText(text) {
+            // Adjusted translation to avoid interfering with '.'
             return text
                 .replace(/;/g, 'æ')
                 .replace(/'/g, 'ø')
-                .replace(/\[/g, 'å')
-                .replace(/\b(\d{2})(\d{2})\b/g, '$1.$2');
+                .replace(/\[/g, 'å');
+                // Removed the regex that replaces two digits with a dot
         }
 
         function setCurrentCanvasIndex() {
@@ -354,33 +354,44 @@
             }
         }
 
+        // New Keyup Event Listener for Immediate '.' Detection
+        editor.addEventListener('keyup', (e) => {
+            if (e.key === '.') {
+                handleDotConversion();
+            }
+        });
+
+        // Optional: Handle paste events to ensure '.' detection
+        editor.addEventListener('paste', (e) => {
+            // Delay execution to allow the paste to complete
+            setTimeout(() => {
+                handleDotConversion();
+            }, 0);
+        });
+
         // Modified input event listener
         editor.addEventListener('input', () => {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                const translatedText = translateText(editor.innerText);
-                if (translatedText !== editor.innerText) {
-                    const selection = window.getSelection();
-                    if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
-                        const cursorPosition = range.startOffset;
-                        editor.innerText = translatedText;
-                        const newRange = document.createRange();
-                        newRange.setStart(editor.firstChild, cursorPosition);
-                        newRange.collapse(true);
-                        selection.removeAllRanges();
-                        selection.addRange(newRange);
-                    }
+            // No delay, immediate processing
+
+            const translatedText = translateText(editor.innerText);
+            if (translatedText !== editor.innerText) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const cursorPosition = range.startOffset;
+                    editor.innerText = translatedText;
+                    const newRange = document.createRange();
+                    newRange.setStart(editor.firstChild, cursorPosition);
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
                 }
+            }
 
-                // Handle immediate conversion if '.' is typed
-                handleDotConversion();
+            // Save the current canvas
+            saveCurrentCanvas();
 
-                // Save the current canvas
-                saveCurrentCanvas();
-
-                // Removed delayed makeTextClickable
-            }, typingDelay);
+            // Removed delayed makeTextClickable
         });
 
         // Event listeners for navigation and clicks
