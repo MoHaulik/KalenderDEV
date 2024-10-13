@@ -149,12 +149,6 @@
                 font-size: 16px;
             }
         }
-
-        /* Optional: Styles for completed tasks */
-        .completed {
-            text-decoration: line-through;
-            color: gray;
-        }
     </style>
 </head>
 <body>
@@ -207,7 +201,6 @@
         }
 
         let currentCanvasIndex = 0;
-        // Removed typingTimer and typingDelay
 
         const hoverSound = new Audio('Hover.wav');
         const clickSound = new Audio('click.mp3');
@@ -216,38 +209,36 @@
         const canvases = canvasKeys.map(key => localStorage.getItem(key) || '');
 
         // Load messages from messages.json
-        let messagesData = {
-            "greetings": {
-                "morning": [],
-                "afternoon": [],
-                "evening": []
-            },
-            "congratulations": []
+        let greetings = {
+            morning: [],
+            afternoon: [],
+            evening: []
         };
+        let congratulatoryMessages = [];
 
         fetch('messages.json')
             .then(response => response.json())
             .then(data => {
-                messagesData = data;
+                greetings = data.greetings;
+                congratulatoryMessages = data.congratulations;
                 // After loading messages, set the initial greeting
                 selectGreeting();
             })
             .catch(error => {
-                console.error('Error fetching messages.json:', error);
-                // Fallback messages in case of error
-                messagesData = {
-                    "greetings": {
-                        "morning": ["Good morning!"],
-                        "afternoon": ["Good afternoon!"],
-                        "evening": ["Good evening!"]
-                    },
-                    "congratulations": [
-                        {
-                            "icon": "🎉",
-                            "text": "Great job!"
-                        }
-                    ]
-                };
+                console.error('Error fetching messages:', error);
+                // Fallback greeting messages in case of error
+                greetings.morning = [
+                    "Morning, Mr. M! How about we kick things off with today’s game plan?",
+                    "Good morning, Mr. M! Let’s set our sights on a productive day!"
+                ];
+                greetings.afternoon = [
+                    "Good afternoon, Mr. M! How’s the day going? Ready to map out what's next?",
+                    "Hey Mr. M! Let’s take a quick look at the afternoon's plan."
+                ];
+                greetings.evening = [
+                    "Good evening, Mr. M! Shall we go over the day's accomplishments?",
+                    "Hey Mr. M! Let’s recap and prep for tomorrow!"
+                ];
                 selectGreeting();
             });
 
@@ -306,8 +297,6 @@
             updateEditor();
         }
 
-        // Removed the makeTextClickable function and any related delayed functionality
-
         let messageTimeout; // To track the message display timeout
 
         function handleClick(event) {
@@ -331,36 +320,38 @@
             window.open('https://huggingface.co/chat/', '_blank');
         }
 
-        // Select greeting message based on time of day
+        // Function to select and display the appropriate greeting based on time of day
         function selectGreeting() {
             const now = new Date();
             const hours = now.getHours();
-            let period = '';
+            let message = "";
 
-            if (hours >= 5 && hours < 12) {
-                period = 'morning';
-            } else if (hours >= 12 && hours < 18) {
-                period = 'afternoon';
-            } else {
-                period = 'evening';
+            if (hours >= 5 && hours < 12) { // Morning: 5 AM - 12 PM
+                message = getRandomMessage(greetings.morning);
+            } else if (hours >= 12 && hours < 18) { // Afternoon: 12 PM - 6 PM
+                message = getRandomMessage(greetings.afternoon);
+            } else { // Evening: 6 PM - 5 AM
+                message = getRandomMessage(greetings.evening);
             }
 
-            const greetings = messagesData.greetings[period];
-            if (greetings && greetings.length > 0) {
-                const randomIndex = Math.floor(Math.random() * greetings.length);
-                greetingMessageElement.innerText = greetings[randomIndex];
-            } else {
-                greetingMessageElement.innerText = "Hello!";
-            }
+            greetingMessageElement.innerText = message;
+            greetingMessageElement.classList.remove('hidden'); // Ensure it's visible
         }
 
-        // New Function: Display Congratulatory Message
-        function displayCongratulatoryMessage() {
-            if (messagesData.congratulations.length === 0) return; // Ensure messages are loaded
+        // Helper function to get a random message from a given array
+        function getRandomMessage(messageArray) {
+            if (messageArray.length === 0) return "";
+            const randomIndex = Math.floor(Math.random() * messageArray.length);
+            return messageArray[randomIndex];
+        }
 
-            // Select a random congratulatory message
-            const randomIndex = Math.floor(Math.random() * messagesData.congratulations.length);
-            const message = messagesData.congratulations[randomIndex];
+        // Function to display a congratulatory message
+        function displayCongratulatoryMessage() {
+            if (congratulatoryMessages.length === 0) return; // Ensure messages are loaded
+
+            // Select a random message
+            const randomIndex = Math.floor(Math.random() * congratulatoryMessages.length);
+            const message = congratulatoryMessages[randomIndex];
             const fullMessage = `${message.icon} ${message.text}`;
 
             // Clear any existing timeout to prevent multiple messages overlapping
@@ -449,7 +440,7 @@
 
         // Modified input event listener
         editor.addEventListener('input', () => {
-            // No delay, immediate processing
+            // Immediate processing without delay
 
             const translatedText = translateText(editor.innerText);
             if (translatedText !== editor.innerText) {
@@ -469,7 +460,7 @@
             // Save the current canvas
             saveCurrentCanvas();
 
-            // Removed delayed makeTextClickable
+            // No delayed conversion needed
         });
 
         // Event listeners for navigation and clicks
@@ -488,7 +479,7 @@
 
         setCurrentCanvasIndex();
         updateEditor();
-        // selectGreeting() is now called after messages are fetched
+        // Greeting is set after messages are fetched
 
     </script>
 </body>
