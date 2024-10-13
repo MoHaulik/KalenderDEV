@@ -2,15 +2,21 @@
     "greetings": {
         "morning": [
             "Morning, Mr. M! How about we kick things off with today’s game plan?",
-            "Good morning, Mr. M! Let’s set our sights on a productive day!"
+            "Good morning, Mr. M! Let’s set our sights on a productive day!",
+            "Rise and shine, Mr. M! Let’s make today great!",
+            "Top of the morning to you, Mr. M! Ready to tackle the day?"
         ],
         "afternoon": [
             "Good afternoon, Mr. M! How’s the day going? Ready to map out what's next?",
-            "Hey Mr. M! Let’s take a quick look at the afternoon's plan."
+            "Hey Mr. M! Let’s take a quick look at the afternoon's plan.",
+            "Hope your afternoon is going well, Mr. M! Let’s keep up the good work.",
+            "Good afternoon, Mr. M! Let’s stay focused and productive."
         ],
         "evening": [
             "Good evening, Mr. M! Shall we go over the day's accomplishments?",
-            "Hey Mr. M! Let’s recap and prep for tomorrow!"
+            "Hey Mr. M! Let’s recap and prep for tomorrow!",
+            "Hope you had a productive day, Mr. M! Let’s wind down.",
+            "Good evening, Mr. M! Time to relax and reflect on your achievements today."
         ]
     },
     "congratulations": [
