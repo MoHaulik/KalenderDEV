@@ -114,6 +114,7 @@
         }
 
         .text-bubble {
+            position: relative;
             background: rgba(255, 255, 255, 0.8);
             padding: 10px 15px;
             border-radius: 15px;
@@ -121,6 +122,12 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             text-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
             flex-grow: 1;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .text-bubble.hidden {
+            opacity: 0;
         }
 
         /* Responsive adjustments */
@@ -171,6 +178,7 @@
         const dayNameElement = document.getElementById('day-name');
         const dateElement = document.getElementById('date');
         const monthNameElement = document.getElementById('month-name');
+        const greetingMessageElement = document.getElementById('greeting-message');
 
         const danishDays = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
         const danishMonths = ['Januar', 'Februar', 'Marts', 'April', 'Maj', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'December'];
@@ -200,6 +208,17 @@
 
         // Load canvases from localStorage or initialize them
         const canvases = canvasKeys.map(key => localStorage.getItem(key) || '');
+
+        // Load congratulatory messages from messages.json
+        let congratulatoryMessages = [];
+        fetch('messages.json')
+            .then(response => response.json())
+            .then(data => {
+                congratulatoryMessages = data;
+            })
+            .catch(error => {
+                console.error('Error fetching congratulatory messages:', error);
+            });
 
         function updateEditor() {
             let currentDay = startDate;
@@ -258,6 +277,8 @@
 
         // Removed the makeTextClickable function and any related delayed functionality
 
+        let messageTimeout; // To track the message display timeout
+
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
                 // Toggle the text decoration
@@ -266,6 +287,9 @@
                 } else {
                     event.target.style.textDecoration = 'line-through';
                     clickSound.play();
+
+                    // Display a random congratulatory message
+                    displayCongratulatoryMessage();
                 }
                 // Save the updated content after toggling
                 saveCurrentCanvas();
@@ -306,7 +330,7 @@
                 message = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
             }
 
-            document.getElementById('greeting-message').innerText = message;
+            greetingMessageElement.innerText = message;
         }
 
         // New Function: Handle conversion when '.' is typed
@@ -411,6 +435,39 @@
         setCurrentCanvasIndex();
         updateEditor();
         selectGreeting(); // Set the greeting message based on the current time
+
+        // New Function: Display Congratulatory Message
+        function displayCongratulatoryMessage() {
+            if (congratulatoryMessages.length === 0) return; // Ensure messages are loaded
+
+            // Select a random message
+            const randomIndex = Math.floor(Math.random() * congratulatoryMessages.length);
+            const message = congratulatoryMessages[randomIndex];
+            const fullMessage = `${message.icon} ${message.text}`;
+
+            // Clear any existing timeout to prevent multiple messages overlapping
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+
+            // Set the congratulatory message
+            greetingMessageElement.innerText = fullMessage;
+
+            // Add 'hidden' class to trigger fade-in
+            greetingMessageElement.classList.remove('hidden');
+
+            // After 20 seconds, fade out and revert to greeting
+            messageTimeout = setTimeout(() => {
+                // Add 'hidden' class to trigger fade-out
+                greetingMessageElement.classList.add('hidden');
+
+                // After fade-out transition (0.5s), revert to default greeting
+                setTimeout(() => {
+                    selectGreeting();
+                }, 500); // Match the CSS transition duration
+            }, 20000); // 20 seconds
+        }
     </script>
 </body>
 </html>
