@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar Editor</title>
+    <title>Kalender Editor</title>
     <style>
         body, html {
             margin: 0;
@@ -59,7 +59,7 @@
 
         #editor {
             width: 100%;
-            height: calc(100% - 60px);
+            min-height: 200px;
             border: none;
             outline: none;
             white-space: pre-wrap;
@@ -142,6 +142,12 @@
                 font-size: 16px;
             }
         }
+
+        /* Additional styling for clickable items */
+        .clickable.strikable {
+            text-decoration: line-through;
+            color: gray;
+        }
     </style>
 </head>
 <body>
@@ -153,7 +159,7 @@
             </div>
             <div id="day-name"></div>
         </div>
-        <div id="editor" contenteditable="true"></div>
+        <div id="editor" contenteditable="true" placeholder="Skriv dine punkter her..."></div>
     </div>
 
     <!-- New Box for Avatar and Text Bubble -->
@@ -195,7 +201,7 @@
         let currentCanvasIndex = 0;
         let typingTimer;
         const typingDelay = 1000; // 1 second delay
-        const clickableDelay = 10000; // 10 seconds delay
+        // Removed clickableDelay as we handle it immediately
 
         const hoverSound = new Audio('Hover.wav');
         const clickSound = new Audio('click.mp3');
@@ -218,6 +224,7 @@
             dateElement.innerText = currentDay;
             monthNameElement.innerText = danishMonths[currentMonth];
             editor.innerHTML = canvases[currentCanvasIndex];
+            makeTextClickable(); // Ensure existing content is clickable
         }
 
         function saveCurrentCanvas() {
@@ -258,20 +265,29 @@
         }
 
         function makeTextClickable() {
-            const textNodes = editor.childNodes;
-            textNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-                    const span = document.createElement('span');
-                    span.textContent = node.textContent;
-                    span.classList.add('clickable');
-                    node.replaceWith(span);
+            const content = editor.innerText;
+            const items = content.split('.').filter(item => item.trim() !== '');
+            const cursorPosition = getCaretPosition();
+
+            editor.innerHTML = ''; // Clear existing content
+
+            items.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.textContent = item.trim();
+                span.classList.add('clickable');
+                span.setAttribute('data-index', index);
+                editor.appendChild(span);
+                if (index < items.length - 1) {
+                    editor.appendChild(document.createTextNode('. '));
                 }
             });
+
+            setCaretPosition(cursorPosition);
         }
 
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
-                event.target.style.textDecoration = 'line-through';
+                event.target.classList.toggle('strikable');
                 clickSound.play();
             }
         }
@@ -283,18 +299,18 @@
         // Select greeting message based on time of day
         function selectGreeting() {
             const morningMessages = [
-                "Morning, Mr. M! How about we kick things off with today’s game plan?",
-                "Good morning, Mr. M! Let’s set our sights on a productive day!"
+                "Godmorgen, Mr. M! Skal vi starte med dagens plan?",
+                "Godmorgen, Mr. M! Lad os sætte fokus på en produktiv dag!"
                 // Add more morning messages here
             ];
             const afternoonMessages = [
-                "Good afternoon, Mr. M! How’s the day going? Ready to map out what's next?",
-                "Hey Mr. M! Let’s take a quick look at the afternoon's plan."
+                "God eftermiddag, Mr. M! Hvordan går dagen? Klar til at planlægge videre?",
+                "Hej Mr. M! Lad os hurtigt kigge på eftermiddagens planer."
                 // Add more afternoon messages here
             ];
             const eveningMessages = [
-                "Good evening, Mr. M! Shall we go over the day's accomplishments?",
-                "Hey Mr. M! Let’s recap and prep for tomorrow!"
+                "God aften, Mr. M! Skal vi gennemgå dagens resultater?",
+                "Hej Mr. M! Lad os opsummere og forberede os til i morgen!"
                 // Add more evening messages here
             ];
 
@@ -321,28 +337,69 @@
             }
         });
 
-        editor.addEventListener('input', () => {
+        editor.addEventListener('input', (e) => {
             clearTimeout(typingTimer);
             typingTimer = setTimeout(() => {
-                const translatedText = translateText(editor.innerText);
+                let translatedText = translateText(editor.innerText);
                 if (translatedText !== editor.innerText) {
-                    const cursorPosition = window.getSelection().getRangeAt(0).startOffset;
+                    const selection = window.getSelection();
+                    const cursorPosition = selection.anchorOffset;
                     editor.innerText = translatedText;
-                    const range = document.createRange();
-                    const sel = window.getSelection();
-                    range.setStart(editor.childNodes[0], cursorPosition);
-                    range.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(range);
+                    setCaretPosition(cursorPosition);
                 }
                 saveCurrentCanvas();
-                setTimeout(makeTextClickable, clickableDelay);
+
+                // Check if the last character is a period
+                if (translatedText.endsWith('.')) {
+                    makeTextClickable();
+                }
             }, typingDelay);
         });
 
-        dateElement.addEventListener('click', showPreviousCanvas);
-        dayNameElement.addEventListener('click', showNextCanvas);
         editor.addEventListener('click', handleClick);
+
+        // Utility functions to get and set caret position
+        function getCaretPosition() {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return 0;
+            const range = selection.getRangeAt(0);
+            const preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(editor);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            return preCaretRange.toString().length;
+        }
+
+        function setCaretPosition(chars) {
+            if (chars >= 0) {
+                const selection = window.getSelection();
+                let node = editor;
+                let nodeStack = [node];
+                let charCount = 0;
+                let found = false;
+
+                while (nodeStack.length > 0 && !found) {
+                    node = nodeStack.pop();
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const nextCharCount = charCount + node.length;
+                        if (chars <= nextCharCount) {
+                            const range = document.createRange();
+                            range.setStart(node, chars - charCount);
+                            range.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                            found = true;
+                        } else {
+                            charCount = nextCharCount;
+                        }
+                    } else {
+                        let i = node.childNodes.length;
+                        while (i--) {
+                            nodeStack.push(node.childNodes[i]);
+                        }
+                    }
+                }
+            }
+        }
 
         setCurrentCanvasIndex();
         updateEditor();
