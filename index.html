@@ -83,11 +83,6 @@
             text-decoration: underline;
         }
 
-        /* New Class for Done Tasks */
-        .done {
-            text-decoration: line-through;
-        }
-
         /* New Box Styling */
         .avatar-box {
             position: relative;
@@ -206,10 +201,7 @@
         const clickSound = new Audio('click.mp3');
 
         // Load canvases from localStorage or initialize them
-        const canvases = canvasKeys.map(key => {
-            const stored = localStorage.getItem(key);
-            return stored ? JSON.parse(stored) : [];
-        });
+        const canvases = canvasKeys.map(key => localStorage.getItem(key) || '');
 
         function updateEditor() {
             let currentDay = startDate;
@@ -225,26 +217,12 @@
             dayNameElement.innerText = danishDays[date.getDay()];
             dateElement.innerText = currentDay;
             monthNameElement.innerText = danishMonths[currentMonth];
-            renderTasks();
+            editor.innerHTML = canvases[currentCanvasIndex];
         }
 
         function saveCurrentCanvas() {
-            const tasks = [];
-            editor.childNodes.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('clickable')) {
-                    tasks.push({
-                        text: node.textContent,
-                        done: node.classList.contains('done')
-                    });
-                } else if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-                    tasks.push({
-                        text: node.textContent.trim(),
-                        done: false
-                    });
-                }
-            });
-            canvases[currentCanvasIndex] = tasks;
-            localStorage.setItem(canvasKeys[currentCanvasIndex], JSON.stringify(tasks));
+            canvases[currentCanvasIndex] = editor.innerHTML;
+            localStorage.setItem(canvasKeys[currentCanvasIndex], editor.innerHTML);
         }
 
         function translateText(text) {
@@ -280,7 +258,7 @@
         }
 
         function makeTextClickable() {
-            const textNodes = editor.childNodes;
+            const textNodes = Array.from(editor.childNodes);
             textNodes.forEach(node => {
                 if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
                     const span = document.createElement('span');
@@ -291,25 +269,16 @@
             });
         }
 
-        function renderTasks() {
-            editor.innerHTML = '';
-            const tasks = canvases[currentCanvasIndex] || [];
-            tasks.forEach(task => {
-                const span = document.createElement('span');
-                span.textContent = task.text;
-                span.classList.add('clickable');
-                if (task.done) {
-                    span.classList.add('done');
-                }
-                editor.appendChild(span);
-                editor.appendChild(document.createElement('br'));
-            });
-        }
-
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
-                event.target.classList.toggle('done');
-                clickSound.play();
+                // Toggle the text decoration
+                if (event.target.style.textDecoration === 'line-through') {
+                    event.target.style.textDecoration = 'none';
+                } else {
+                    event.target.style.textDecoration = 'line-through';
+                    clickSound.play();
+                }
+                // Save the updated content after toggling
                 saveCurrentCanvas();
             }
         }
@@ -426,15 +395,7 @@
             }, typingDelay);
         });
 
-        // Prevent default behavior for Enter key to insert <br> instead of creating new paragraphs
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.execCommand('insertHTML', false, '<br><br>');
-            }
-        });
-
-        // Event listeners for navigation and clicking
+        // Event listeners for navigation and clicks
         dateElement.addEventListener('click', showPreviousCanvas);
         dayNameElement.addEventListener('click', showNextCanvas);
         editor.addEventListener('click', handleClick);
@@ -448,7 +409,6 @@
             }
         });
 
-        // Initialize
         setCurrentCanvasIndex();
         updateEditor();
         selectGreeting(); // Set the greeting message based on the current time
