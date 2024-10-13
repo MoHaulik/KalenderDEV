@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalender Editor</title>
+    <title>Calendar Editor</title>
     <style>
         body, html {
             margin: 0;
@@ -59,7 +59,7 @@
 
         #editor {
             width: 100%;
-            min-height: 200px;
+            height: calc(100% - 60px);
             border: none;
             outline: none;
             white-space: pre-wrap;
@@ -142,12 +142,6 @@
                 font-size: 16px;
             }
         }
-
-        /* Additional styling for clickable items */
-        .clickable.strikable {
-            text-decoration: line-through;
-            color: gray;
-        }
     </style>
 </head>
 <body>
@@ -159,7 +153,7 @@
             </div>
             <div id="day-name"></div>
         </div>
-        <div id="editor" contenteditable="true" placeholder="Skriv dine punkter her..."></div>
+        <div id="editor" contenteditable="true"></div>
     </div>
 
     <!-- New Box for Avatar and Text Bubble -->
@@ -201,7 +195,7 @@
         let currentCanvasIndex = 0;
         let typingTimer;
         const typingDelay = 1000; // 1 second delay
-        // Removed clickableDelay as we handle it immediately
+        const clickableDelay = 10000; // 10 seconds delay
 
         const hoverSound = new Audio('Hover.wav');
         const clickSound = new Audio('click.mp3');
@@ -224,7 +218,6 @@
             dateElement.innerText = currentDay;
             monthNameElement.innerText = danishMonths[currentMonth];
             editor.innerHTML = canvases[currentCanvasIndex];
-            makeTextClickable(); // Ensure existing content is clickable
         }
 
         function saveCurrentCanvas() {
@@ -265,29 +258,20 @@
         }
 
         function makeTextClickable() {
-            const content = editor.innerText;
-            const items = content.split('.').filter(item => item.trim() !== '');
-            const cursorPosition = getCaretPosition();
-
-            editor.innerHTML = ''; // Clear existing content
-
-            items.forEach((item, index) => {
-                const span = document.createElement('span');
-                span.textContent = item.trim();
-                span.classList.add('clickable');
-                span.setAttribute('data-index', index);
-                editor.appendChild(span);
-                if (index < items.length - 1) {
-                    editor.appendChild(document.createTextNode('. '));
+            const textNodes = editor.childNodes;
+            textNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+                    const span = document.createElement('span');
+                    span.textContent = node.textContent;
+                    span.classList.add('clickable');
+                    node.replaceWith(span);
                 }
             });
-
-            setCaretPosition(cursorPosition);
         }
 
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
-                event.target.classList.toggle('strikable');
+                event.target.style.textDecoration = 'line-through';
                 clickSound.play();
             }
         }
@@ -299,18 +283,18 @@
         // Select greeting message based on time of day
         function selectGreeting() {
             const morningMessages = [
-                "Godmorgen, Mr. M! Skal vi starte med dagens plan?",
-                "Godmorgen, Mr. M! Lad os sætte fokus på en produktiv dag!"
+                "Morning, Mr. M! How about we kick things off with today’s game plan?",
+                "Good morning, Mr. M! Let’s set our sights on a productive day!"
                 // Add more morning messages here
             ];
             const afternoonMessages = [
-                "God eftermiddag, Mr. M! Hvordan går dagen? Klar til at planlægge videre?",
-                "Hej Mr. M! Lad os hurtigt kigge på eftermiddagens planer."
+                "Good afternoon, Mr. M! How’s the day going? Ready to map out what's next?",
+                "Hey Mr. M! Let’s take a quick look at the afternoon's plan."
                 // Add more afternoon messages here
             ];
             const eveningMessages = [
-                "God aften, Mr. M! Skal vi gennemgå dagens resultater?",
-                "Hej Mr. M! Lad os opsummere og forberede os til i morgen!"
+                "Good evening, Mr. M! Shall we go over the day's accomplishments?",
+                "Hey Mr. M! Let’s recap and prep for tomorrow!"
                 // Add more evening messages here
             ];
 
@@ -329,6 +313,86 @@
             document.getElementById('greeting-message').innerText = message;
         }
 
+        // New Function: Handle conversion when '.' is typed
+        function handleDotConversion() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            const range = selection.getRangeAt(0);
+            const node = range.startContainer;
+
+            // Ensure we're dealing with a text node
+            if (node.nodeType !== Node.TEXT_NODE) return;
+
+            const text = node.textContent;
+            const dotIndex = text.lastIndexOf('.');
+
+            // If a '.' is found at the end of the text
+            if (dotIndex === text.length - 1) {
+                const beforeDot = text.slice(0, dotIndex).trim();
+
+                if (beforeDot.length === 0) return; // Avoid empty lines
+
+                // Replace the text node with a clickable span
+                const span = document.createElement('span');
+                span.classList.add('clickable');
+                span.textContent = beforeDot;
+
+                // Replace the text node with the span
+                node.parentNode.replaceChild(span, node);
+
+                // Insert a line break after the span
+                const br = document.createElement('br');
+                span.parentNode.insertBefore(br, span.nextSibling);
+
+                // Move the cursor to the new line after the line break
+                const newRange = document.createRange();
+                newRange.setStartAfter(br);
+                newRange.collapse(true);
+
+                // Update the selection to the new range
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+
+                // Save the updated content
+                saveCurrentCanvas();
+            }
+        }
+
+        // Modified input event listener
+        editor.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                const translatedText = translateText(editor.innerText);
+                if (translatedText !== editor.innerText) {
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const cursorPosition = range.startOffset;
+                        editor.innerText = translatedText;
+                        const newRange = document.createRange();
+                        newRange.setStart(editor.firstChild, cursorPosition);
+                        newRange.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    }
+                }
+
+                // Handle immediate conversion if '.' is typed
+                handleDotConversion();
+
+                // Save the current canvas
+                saveCurrentCanvas();
+
+                // Schedule delayed clickable conversion for other texts
+                setTimeout(makeTextClickable, clickableDelay);
+            }, typingDelay);
+        });
+
+        dateElement.addEventListener('click', showPreviousCanvas);
+        dayNameElement.addEventListener('click', showNextCanvas);
+        editor.addEventListener('click', handleClick);
+
+        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') {
                 showPreviousCanvas();
@@ -336,70 +400,6 @@
                 showNextCanvas();
             }
         });
-
-        editor.addEventListener('input', (e) => {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                let translatedText = translateText(editor.innerText);
-                if (translatedText !== editor.innerText) {
-                    const selection = window.getSelection();
-                    const cursorPosition = selection.anchorOffset;
-                    editor.innerText = translatedText;
-                    setCaretPosition(cursorPosition);
-                }
-                saveCurrentCanvas();
-
-                // Check if the last character is a period
-                if (translatedText.endsWith('.')) {
-                    makeTextClickable();
-                }
-            }, typingDelay);
-        });
-
-        editor.addEventListener('click', handleClick);
-
-        // Utility functions to get and set caret position
-        function getCaretPosition() {
-            const selection = window.getSelection();
-            if (selection.rangeCount === 0) return 0;
-            const range = selection.getRangeAt(0);
-            const preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(editor);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            return preCaretRange.toString().length;
-        }
-
-        function setCaretPosition(chars) {
-            if (chars >= 0) {
-                const selection = window.getSelection();
-                let node = editor;
-                let nodeStack = [node];
-                let charCount = 0;
-                let found = false;
-
-                while (nodeStack.length > 0 && !found) {
-                    node = nodeStack.pop();
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const nextCharCount = charCount + node.length;
-                        if (chars <= nextCharCount) {
-                            const range = document.createRange();
-                            range.setStart(node, chars - charCount);
-                            range.collapse(true);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            found = true;
-                        } else {
-                            charCount = nextCharCount;
-                        }
-                    } else {
-                        let i = node.childNodes.length;
-                        while (i--) {
-                            nodeStack.push(node.childNodes[i]);
-                        }
-                    }
-                }
-            }
-        }
 
         setCurrentCanvasIndex();
         updateEditor();
