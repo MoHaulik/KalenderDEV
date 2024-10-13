@@ -76,11 +76,17 @@
 
         .clickable {
             cursor: pointer;
-            transition: text-decoration 0.3s ease;
+            transition: text-decoration 0.3s ease, color 0.3s ease;
         }
 
         .clickable:hover {
             text-decoration: underline;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray; /* Optional: Change color to indicate completion */
+            transition: text-decoration 0.3s ease, color 0.3s ease;
         }
 
         /* New Box Styling */
@@ -301,7 +307,7 @@
 
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
-                // Toggle the text decoration
+                // Toggle the 'completed' class
                 if (event.target.classList.contains('completed')) {
                     event.target.classList.remove('completed');
                 } else {
@@ -363,7 +369,7 @@
             // Set the congratulatory message
             greetingMessageElement.innerText = fullMessage;
 
-            // Add 'hidden' class to trigger fade-in
+            // Remove 'hidden' class to trigger fade-in
             greetingMessageElement.classList.remove('hidden');
 
             // After 20 seconds, fade out and revert to greeting
@@ -480,7 +486,6 @@
         setCurrentCanvasIndex();
         updateEditor();
         // Greeting is set after messages are fetched
-
     </script>
 </body>
 </html>
