@@ -44,6 +44,7 @@
             align-items: flex-start;
             padding: 10px;
             box-sizing: border-box;
+            position: relative; /* For positioning the fullscreen button */
         }
 
         #date-container {
@@ -136,6 +137,37 @@
             opacity: 0;
         }
 
+        /* Fullscreen Button Styling */
+        .fullscreen-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .fullscreen-button.visible {
+            opacity: 1;
+        }
+
+        /* Fullscreen Button Icon */
+        .fullscreen-button::before {
+            content: "\26F6"; /* Unicode for fullscreen icon */
+            font-size: 20px;
+            color: black;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 480px) {
             .calendar-container, .avatar-box {
@@ -154,6 +186,17 @@
             .text-bubble {
                 font-size: 16px;
             }
+
+            .fullscreen-button {
+                width: 35px;
+                height: 35px;
+                top: 8px;
+                right: 8px;
+            }
+
+            .fullscreen-button::before {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
@@ -165,6 +208,8 @@
                 <div id="month-name"></div>
             </div>
             <div id="day-name"></div>
+            <!-- Fullscreen Button -->
+            <button class="fullscreen-button" id="fullscreen-btn" aria-label="Toggle Fullscreen"></button>
         </div>
         <div id="editor" contenteditable="true"></div>
     </div>
@@ -185,6 +230,87 @@
         const dateElement = document.getElementById('date');
         const monthNameElement = document.getElementById('month-name');
         const greetingMessageElement = document.getElementById('greeting-message');
+
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const header = document.getElementById('header');
+
+        let longPressTimer;
+        const longPressDuration = 500; // milliseconds
+
+        // Function to enter fullscreen
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        // Function to exit fullscreen
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
+
+        // Toggle fullscreen mode
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                enterFullscreen();
+            } else {
+                exitFullscreen();
+            }
+        }
+
+        // Show fullscreen button
+        function showFullscreenButton() {
+            fullscreenBtn.classList.add('visible');
+        }
+
+        // Hide fullscreen button
+        function hideFullscreenButton() {
+            fullscreenBtn.classList.remove('visible');
+        }
+
+        // Event listeners for long press on header
+        header.addEventListener('touchstart', (e) => {
+            // Start the timer
+            longPressTimer = setTimeout(() => {
+                showFullscreenButton();
+            }, longPressDuration);
+        });
+
+        header.addEventListener('touchend', (e) => {
+            // Clear the timer
+            clearTimeout(longPressTimer);
+        });
+
+        header.addEventListener('touchmove', (e) => {
+            // If user moves finger, cancel the long press
+            clearTimeout(longPressTimer);
+        });
+
+        // Hide fullscreen button when tapping outside
+        document.addEventListener('touchstart', (e) => {
+            if (!fullscreenBtn.contains(e.target) && !header.contains(e.target)) {
+                hideFullscreenButton();
+            }
+        });
+
+        // Click event for fullscreen button
+        fullscreenBtn.addEventListener('click', () => {
+            toggleFullscreen();
+            hideFullscreenButton();
+        });
+
+        // Existing JavaScript code...
 
         const danishDays = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
         const danishMonths = ['Januar', 'Februar', 'Marts', 'April', 'Maj', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'December'];
