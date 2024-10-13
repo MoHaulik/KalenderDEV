@@ -149,6 +149,12 @@
                 font-size: 16px;
             }
         }
+
+        /* Optional: Styles for completed tasks */
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
     </style>
 </head>
 <body>
@@ -209,15 +215,40 @@
         // Load canvases from localStorage or initialize them
         const canvases = canvasKeys.map(key => localStorage.getItem(key) || '');
 
-        // Load congratulatory messages from messages.json
-        let congratulatoryMessages = [];
+        // Load messages from messages.json
+        let messagesData = {
+            "greetings": {
+                "morning": [],
+                "afternoon": [],
+                "evening": []
+            },
+            "congratulations": []
+        };
+
         fetch('messages.json')
             .then(response => response.json())
             .then(data => {
-                congratulatoryMessages = data;
+                messagesData = data;
+                // After loading messages, set the initial greeting
+                selectGreeting();
             })
             .catch(error => {
-                console.error('Error fetching congratulatory messages:', error);
+                console.error('Error fetching messages.json:', error);
+                // Fallback messages in case of error
+                messagesData = {
+                    "greetings": {
+                        "morning": ["Good morning!"],
+                        "afternoon": ["Good afternoon!"],
+                        "evening": ["Good evening!"]
+                    },
+                    "congratulations": [
+                        {
+                            "icon": "🎉",
+                            "text": "Great job!"
+                        }
+                    ]
+                };
+                selectGreeting();
             });
 
         function updateEditor() {
@@ -282,10 +313,10 @@
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
                 // Toggle the text decoration
-                if (event.target.style.textDecoration === 'line-through') {
-                    event.target.style.textDecoration = 'none';
+                if (event.target.classList.contains('completed')) {
+                    event.target.classList.remove('completed');
                 } else {
-                    event.target.style.textDecoration = 'line-through';
+                    event.target.classList.add('completed');
                     clickSound.play();
 
                     // Display a random congratulatory message
@@ -302,35 +333,58 @@
 
         // Select greeting message based on time of day
         function selectGreeting() {
-            const morningMessages = [
-                "Morning, Mr. M! How about we kick things off with today’s game plan?",
-                "Good morning, Mr. M! Let’s set our sights on a productive day!"
-                // Add more morning messages here
-            ];
-            const afternoonMessages = [
-                "Good afternoon, Mr. M! How’s the day going? Ready to map out what's next?",
-                "Hey Mr. M! Let’s take a quick look at the afternoon's plan."
-                // Add more afternoon messages here
-            ];
-            const eveningMessages = [
-                "Good evening, Mr. M! Shall we go over the day's accomplishments?",
-                "Hey Mr. M! Let’s recap and prep for tomorrow!"
-                // Add more evening messages here
-            ];
-
             const now = new Date();
             const hours = now.getHours();
-            let message;
+            let period = '';
 
-            if (hours >= 5 && hours < 12) { // Morning: 5 AM - 12 PM
-                message = morningMessages[Math.floor(Math.random() * morningMessages.length)];
-            } else if (hours >= 12 && hours < 18) { // Afternoon: 12 PM - 6 PM
-                message = afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
-            } else { // Evening: 6 PM - 5 AM
-                message = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
+            if (hours >= 5 && hours < 12) {
+                period = 'morning';
+            } else if (hours >= 12 && hours < 18) {
+                period = 'afternoon';
+            } else {
+                period = 'evening';
             }
 
-            greetingMessageElement.innerText = message;
+            const greetings = messagesData.greetings[period];
+            if (greetings && greetings.length > 0) {
+                const randomIndex = Math.floor(Math.random() * greetings.length);
+                greetingMessageElement.innerText = greetings[randomIndex];
+            } else {
+                greetingMessageElement.innerText = "Hello!";
+            }
+        }
+
+        // New Function: Display Congratulatory Message
+        function displayCongratulatoryMessage() {
+            if (messagesData.congratulations.length === 0) return; // Ensure messages are loaded
+
+            // Select a random congratulatory message
+            const randomIndex = Math.floor(Math.random() * messagesData.congratulations.length);
+            const message = messagesData.congratulations[randomIndex];
+            const fullMessage = `${message.icon} ${message.text}`;
+
+            // Clear any existing timeout to prevent multiple messages overlapping
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+
+            // Set the congratulatory message
+            greetingMessageElement.innerText = fullMessage;
+
+            // Add 'hidden' class to trigger fade-in
+            greetingMessageElement.classList.remove('hidden');
+
+            // After 20 seconds, fade out and revert to greeting
+            messageTimeout = setTimeout(() => {
+                // Add 'hidden' class to trigger fade-out
+                greetingMessageElement.classList.add('hidden');
+
+                // After fade-out transition (0.5s), revert to default greeting
+                setTimeout(() => {
+                    selectGreeting();
+                }, 500); // Match the CSS transition duration
+            }, 20000); // 20 seconds
         }
 
         // New Function: Handle conversion when '.' is typed
@@ -434,40 +488,8 @@
 
         setCurrentCanvasIndex();
         updateEditor();
-        selectGreeting(); // Set the greeting message based on the current time
+        // selectGreeting() is now called after messages are fetched
 
-        // New Function: Display Congratulatory Message
-        function displayCongratulatoryMessage() {
-            if (congratulatoryMessages.length === 0) return; // Ensure messages are loaded
-
-            // Select a random message
-            const randomIndex = Math.floor(Math.random() * congratulatoryMessages.length);
-            const message = congratulatoryMessages[randomIndex];
-            const fullMessage = `${message.icon} ${message.text}`;
-
-            // Clear any existing timeout to prevent multiple messages overlapping
-            if (messageTimeout) {
-                clearTimeout(messageTimeout);
-                messageTimeout = null;
-            }
-
-            // Set the congratulatory message
-            greetingMessageElement.innerText = fullMessage;
-
-            // Add 'hidden' class to trigger fade-in
-            greetingMessageElement.classList.remove('hidden');
-
-            // After 20 seconds, fade out and revert to greeting
-            messageTimeout = setTimeout(() => {
-                // Add 'hidden' class to trigger fade-out
-                greetingMessageElement.classList.add('hidden');
-
-                // After fade-out transition (0.5s), revert to default greeting
-                setTimeout(() => {
-                    selectGreeting();
-                }, 500); // Match the CSS transition duration
-            }, 20000); // 20 seconds
-        }
     </script>
 </body>
 </html>
