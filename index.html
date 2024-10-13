@@ -195,7 +195,6 @@
         let currentCanvasIndex = 0;
         let typingTimer;
         const typingDelay = 1000; // 1 second delay
-        const clickableDelay = 10000; // 10 seconds delay
 
         const hoverSound = new Audio('Hover.wav');
         const clickSound = new Audio('click.mp3');
@@ -257,17 +256,7 @@
             updateEditor();
         }
 
-        function makeTextClickable() {
-            const textNodes = Array.from(editor.childNodes);
-            textNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-                    const span = document.createElement('span');
-                    span.textContent = node.textContent;
-                    span.classList.add('clickable');
-                    node.replaceWith(span);
-                }
-            });
-        }
+        // Removed the makeTextClickable function and any related delayed functionality
 
         function handleClick(event) {
             if (event.target.classList.contains('clickable')) {
@@ -390,8 +379,7 @@
                 // Save the current canvas
                 saveCurrentCanvas();
 
-                // Schedule delayed clickable conversion for other texts
-                setTimeout(makeTextClickable, clickableDelay);
+                // Removed delayed makeTextClickable
             }, typingDelay);
         });
 
