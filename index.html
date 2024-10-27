@@ -3,225 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar with Todo Features</title>
+    <title>Interactive Calendar</title>
     <style>
-        /* Base styles */
+        /* Root Variables */
         :root {
             --primary-color: #4a90e2;
-            --need-todo-color: #ff5252;
-            --nice-todo-color: #4caf50;
-            --background-color: #1a1a1a;
-            --text-color: #ffffff;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --glow-color: #ff6b6b;
+            --timer-background: #ffffff;
+            --timer-shadow: rgba(0, 0, 0, 0.1);
+            --progress-color: #4CAF50;
+            --progress-background: #ddd;
+            --knob-color: #2196F3;
+            --mode-indicator: #bbb;
+            --active-mode: #4CAF50;
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 0;
             font-family: 'Arial', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* View containers */
+        /* View Container Styles */
         .view-container {
             display: none;
             height: 100vh;
-            width: 100vw;
+            position: relative;
+            background-color: var(--timer-background);
         }
 
         .active-view {
             display: block;
         }
 
-        /* Calendar container */
+        /* Calendar View Styles */
         .calendar-container {
-            padding: 20px;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
+            height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Header styles */
         #header-calendar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         #date-container-calendar {
             display: flex;
             flex-direction: column;
+            gap: 5px;
         }
 
         #date-calendar {
-            font-size: 2em;
+            font-size: 2.5em;
             font-weight: bold;
+            color: var(--text-color);
+            line-height: 1;
         }
 
         #month-name-calendar {
-            font-size: 1.2em;
-            color: var(--primary-color);
+            font-size: 1.4em;
+            color: var(--text-color);
+            opacity: 0.8;
         }
 
         #day-name-calendar {
-            font-size: 1.1em;
-            color: #888;
+            font-size: 1.2em;
+            color: var(--text-color);
+            font-weight: 500;
         }
 
-        /* Editor styles */
+        /* Editor Styles */
         #editor-calendar {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 20px;
-            min-height: 300px;
+            flex-grow: 1;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             outline: none;
-            font-size: 1.1em;
+            font-size: 16px;
             line-height: 1.6;
+            overflow-y: auto;
         }
 
-        /* Enhanced Todo Styles */
-        .todo-item {
-            position: relative;
-            padding: 8px 12px;
-            margin: 8px 0;
-            border-radius: 6px;
-            transition: all 0.3s ease;
+        /* Need to do animation */
+        @keyframes glowing {
+            0% { text-shadow: 0 0 5px var(--glow-color); }
+            50% { text-shadow: 0 0 20px var(--glow-color), 0 0 30px var(--glow-color); }
+            100% { text-shadow: 0 0 5px var(--glow-color); }
         }
 
         .need-to-do {
-            background: rgba(255, 82, 82, 0.15);
-            box-shadow: 0 0 15px rgba(255, 82, 82, 0.3);
-            text-shadow: 0 0 10px rgba(255, 82, 82, 0.5);
+            color: var(--glow-color);
+            animation: glowing 2s ease-in-out infinite;
+            font-weight: bold;
         }
 
-        .need-to-do::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 82, 82, 0.15);
-            border-radius: 6px;
-            animation: pulse 2s infinite;
-            z-index: -1;
-        }
-
-        .need-to-do::after {
-            content: '❗';
-            position: absolute;
-            left: -20px;
-            animation: shake 1s infinite;
-        }
-
-        .nice-to-do {
-            background: rgba(76, 175, 80, 0.15);
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.6;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 0.6;
-            }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            75% { transform: translateX(2px); }
-        }
-
-        /* Timer styles */
-        .timer-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
-
-        .progress-ring {
-            width: 200px;
-            height: 200px;
-        }
-
-        .progress-ring circle {
-            fill: none;
-            stroke: #ddd;
-            stroke-width: 5;
-        }
-
-        .progress-ring circle.progress {
-            stroke: var(--primary-color);
-            stroke-dasharray: 283;
-            stroke-dashoffset: 283;
-            transition: stroke-dashoffset 0.3s;
-        }
-
-        /* Mode indicators */
-        .mode-indicators {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-
-        .mode-indicator {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        /* Navigation */
-        .nav-button-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 20px;
-        }
-
-        .nav-button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .nav-button.active {
-            background: var(--primary-color);
-        }
-
-        /* Avatar box */
+        /* Avatar Box Styles */
         .avatar-box {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
             cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar-box:hover {
+            transform: scale(1.05);
         }
 
         .avatar {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+            border: 3px solid white;
         }
 
         .avatar img {
@@ -233,16 +151,294 @@
         .text-bubble {
             display: none;
             position: absolute;
-            bottom: 60px;
+            bottom: 80px;
             right: 0;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 200px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            max-width: 300px;
+            font-size: 14px;
+            color: var(--text-color);
         }
 
-        .avatar-box:hover .text-bubble {
-            display: block;
+        .text-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid white;
+        }
+
+        /* Timer View Styles */
+        .timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            position: relative;
+        }
+
+        .progress-ring {
+            width: 400px;
+            height: 400px;
+            transform: rotate(-90deg);
+            position: relative;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform-origin: center;
+        }
+
+        .progress-ring circle:first-child {
+            stroke: var(--progress-background);
+        }
+
+        .progress-ring circle.progress {
+            stroke: var(--progress-color);
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .mode-indicators {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            pointer-events: none;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--mode-indicator);
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .mode-indicator.active {
+            background: var(--active-mode);
+            transform: scale(1.2);
+        }
+
+        .knob {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: var(--knob-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .knob:hover {
+            transform: scale(1.1);
+        }
+
+        .knob:active {
+            transform: scale(0.95);
+        }
+
+        .display {
+            font-size: 4em;
+            font-family: 'Courier New', monospace;
+            margin: 30px 0;
+            color: var(--text-color);
+            font-weight: bold;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .mode-name {
+            font-size: 1.4em;
+            color: var(--text-color);
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Navigation Button Styles */
+        .nav-button-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: white;
+            padding: 12px;
+            border-radius: 25px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: #e0e0e0;
+        }
+
+        .nav-button.active {
+            background: var(--primary-color);
+        }
+
+        .nav-button.active::after {
+            opacity: 1;
+            filter: brightness(2);
+        }
+
+        #btn-calendar::after {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23333" d="M19,4H17V3a1,1,0,0,0-2,0V4H9V3A1,1,0,0,0,7,3V4H5A2,2,0,0,0,3,6V20a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2V6A2,2,0,0,0,19,4Z"/></svg>');
+        }
+
+        #btn-timer::after {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23333" d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm4,11H12a1,1,0,0,1-1-1V8a1,1,0,0,1,2,0v3h3a1,1,0,0,1,0,2Z"/></svg>');
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .calendar-container {
+                padding: 10px;
+            }
+
+            #header-calendar {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            #date-calendar {
+                font-size: 2em;
+            }
+
+            #month-name-calendar {
+                font-size: 1.2em;
+            }
+
+            #day-name-calendar {
+                font-size: 1em;
+            }
+
+            .progress-ring {
+                width: 300px;
+                height: 300px;
+            }
+
+            .mode-indicators {
+                width: 300px;
+                height: 300px;
+            }
+
+            .display {
+                font-size: 3em;
+            }
+
+            .nav-button {
+                width: 45px;
+                height: 45px;
+            }
+
+            .avatar-box {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .avatar {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .progress-ring {
+                width: 250px;
+                height: 250px;
+            }
+
+            .mode-indicators {
+                width: 250px;
+                height: 250px;
+            }
+
+            .display {
+                font-size: 2.5em;
+            }
+
+            .nav-button {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Accessibility Styles */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* Focus Styles */
+        .nav-button:focus,
+        #editor-calendar:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .nav-button-container,
+            .avatar-box {
+                display: none;
+            }
+
+            .calendar-container {
+                height: auto;
+            }
+
+            #editor-calendar {
+                border: 1px solid #ccc;
+                box-shadow: none;
+            }
         }
     </style>
 </head>
@@ -256,11 +452,11 @@
                 </div>
                 <div id="day-name-calendar"></div>
             </div>
-            <div id="editor-calendar" contenteditable="true"></div>
+            <div id="editor-calendar" contenteditable="true" aria-label="Calendar Notes Editor"></div>
         </div>
-        <div class="avatar-box" onclick="openChat()">
+        <div class="avatar-box" onclick="openChat()" role="button" aria-label="Open Chat">
             <div class="avatar">
-                <img src="Avatar.jpeg" alt="Avatar">
+                <img src="Avatar.jpeg" alt="Assistant Avatar">
             </div>
             <div id="greeting-message-calendar" class="text-bubble"></div>
         </div>
@@ -273,76 +469,191 @@
                 <circle class="progress" cx="50" cy="50" r="45"></circle>
             </svg>
             <div class="mode-indicators">
-                <div class="mode-indicator" style="top: 15%; left: 50%;"></div>
-                <div class="mode-indicator" style="top: 50%; right: 15%;"></div>
-                <div class="mode-indicator" style="bottom: 15%; left: 50%;"></div>
+                <div class="mode-indicator" style="top: 15%; left: 50%;" data-mode="pomodoro"></div>
+                <div class="mode-indicator" style="top: 50%; right: 15%;" data-mode="shortBreak"></div>
+                <div class="mode-indicator" style="bottom: 15%; left: 50%;" data-mode="longBreak"></div>
             </div>
-            <div class="knob"></div>
-            <div class="display">--:--</div>
-            <div class="mode-name"></div>
+            <div class="knob" role="slider" aria-label="Timer Control" tabindex="0"></div>
+            <div class="display" aria-live="polite">--:--</div>
+            <div class="mode-name" aria-live="polite"></div>
         </div>
     </div>
 
     <div class="nav-button-container">
-        <div id="btn-calendar" class="nav-button active" aria-label="Calendar View"></div>
-        <div id="btn-timer" class="nav-button" aria-label="Timer View"></div>
+        <div id="btn-calendar" class="nav-button active" role="button" aria-label="Switch to Calendar View"></div>
+        <div id="btn-timer" class="nav-button" role="button" aria-label="Switch to Timer View"></div>
     </div>
 
     <script>
-        // Initialize date display
+        // Timer Configuration
+        const TIMER_MODES = {
+            pomodoro: {
+                duration: 25 * 60,
+                name: 'Pomodoro'
+            },
+            shortBreak: {
+                duration: 5 * 60,
+                name: 'Short Break'
+            },
+            longBreak: {
+                duration: 15 * 60,
+                name: 'Long Break'
+            }
+        };
+
+        let currentMode = 'pomodoro';
+        let timeRemaining = TIMER_MODES[currentMode].duration;
+        let isRunning = false;
+        let timerInterval = null;
+
+        // DOM Elements
+        const timerDisplay = document.querySelector('.display');
+        const modeName = document.querySelector('.mode-name');
+        const progressRing = document.querySelector('.progress-ring circle.progress');
+        const knob = document.querySelector('.knob');
+        const modeIndicators = document.querySelectorAll('.mode-indicator');
+
+        // Timer Functions
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            if (timeRemaining <= 0) {
+                stopTimer();
+                return;
+            }
+
+            timeRemaining--;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            timerDisplay.textContent = formatTime(timeRemaining);
+            const progress = (TIMER_MODES[currentMode].duration - timeRemaining) / TIMER_MODES[currentMode].duration;
+            const circumference = 2 * Math.PI * 45;
+            progressRing.style.strokeDashoffset = circumference * (1 - progress);
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (isRunning) {
+                isRunning = false;
+                clearInterval(timerInterval);
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timeRemaining = TIMER_MODES[currentMode].duration;
+            updateDisplay();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            resetTimer();
+            modeName.textContent = TIMER_MODES[mode].name;
+            
+            // Update mode indicators
+            modeIndicators.forEach(indicator => {
+                indicator.classList.remove('active');
+                if (indicator.dataset.mode === mode) {
+                    indicator.classList.add('active');
+                }
+            });
+        }
+
+        // Knob Control
+        let isDragging = false;
+        let startAngle = 0;
+
+        knob.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
+        
+        function startDrag(e) {
+            isDragging = true;
+            const knobRect = knob.getBoundingClientRect();
+            startAngle = Math.atan2(
+                e.clientY - (knobRect.top + knobRect.height / 2),
+                e.clientX - (knobRect.left + knobRect.width / 2)
+            );
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            
+            const knobRect = knob.getBoundingClientRect();
+            const currentAngle = Math.atan2(
+                e.clientY - (knobRect.top + knobRect.height / 2),
+                e.clientX - (knobRect.left + knobRect.width / 2)
+            );
+            
+            const angleDiff = currentAngle - startAngle;
+            const degrees = (angleDiff * 180 / Math.PI + 360) % 360;
+            
+            if (degrees < 120) setMode('pomodoro');
+            else if (degrees < 240) setMode('shortBreak');
+            else setMode('longBreak');
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+
+        // Calendar Functions
         function updateDate() {
             const now = new Date();
-            const dateEl = document.getElementById('date-calendar');
-            const monthEl = document.getElementById('month-name-calendar');
-            const dayEl = document.getElementById('day-name-calendar');
+            const date = now.getDate();
+            const month = now.toLocaleString('default', { month: 'long' });
+            const day = now.toLocaleString('default', { weekday: 'long' });
 
-            dateEl.textContent = now.getDate();
-            monthEl.textContent = now.toLocaleString('default', { month: 'long' });
-            dayEl.textContent = now.toLocaleString('default', { weekday: 'long' });
+            document.getElementById('date-calendar').textContent = date;
+            document.getElementById('month-name-calendar').textContent = month;
+            document.getElementById('day-name-calendar').textContent = day;
         }
 
-        // Process editor content
-        function processEditorContent(editor) {
-            const content = editor.innerHTML;
-            const lines = content.split('<br>');
-            
-            const processedLines = lines.map(line => {
-                const trimmedLine = line.trim();
-                if (trimmedLine.startsWith('!')) {
-                    return `<div class="todo-item need-to-do">${trimmedLine.substring(1)}</div>`;
-                } else if (trimmedLine.startsWith('.')) {
-                    return `<div class="todo-item nice-to-do">${trimmedLine.substring(1)}</div>`;
-                }
-                return line;
-            });
-            
-            return processedLines.join('<br>');
-        }
-
-        // Initialize editor functionality
-        function initializeEditor() {
+        // Need to do feature processing
+        function processEditorContent() {
             const editor = document.getElementById('editor-calendar');
+            const content = editor.innerHTML;
             
-            editor.addEventListener('input', (e) => {
+            // Remove existing need-to-do classes to prevent duplicates
+            const cleanContent = content.replace(/class="need-to-do"/g, '');
+            
+            // Add need-to-do class to items starting with "!"
+            const processedContent = cleanContent.replace(
+                /!([^<>\n]+)/g, 
+                '<span class="need-to-do">!$1</span>'
+            );
+            
+            if (content !== processedContent) {
+                // Save selection
                 const selection = window.getSelection();
                 const range = selection.getRangeAt(0);
-                const startOffset = range.startOffset;
+                const cursorPosition = range.startOffset;
                 
-                const processedContent = processEditorContent(editor);
+                // Update content
+                editor.innerHTML = processedContent;
                 
-                if (processedContent !== editor.innerHTML) {
-                    editor.innerHTML = processedContent;
-                    
+                // Restore cursor position
+                try {
                     const newRange = document.createRange();
-                    newRange.setStart(editor.firstChild, startOffset);
+                    newRange.setStart(editor.firstChild || editor, Math.min(cursorPosition, (editor.firstChild || editor).length));
                     newRange.collapse(true);
                     selection.removeAllRanges();
                     selection.addRange(newRange);
+                } catch (e) {
+                    console.log('Cursor position restoration failed:', e);
                 }
-            });
-            
-            if (editor.innerHTML.trim()) {
-                editor.innerHTML = processEditorContent(editor);
             }
         }
 
@@ -352,31 +663,87 @@
                 view.classList.remove('active-view');
             });
             document.getElementById(viewId).classList.add('active-view');
-            
+
             document.querySelectorAll('.nav-button').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById(`btn-${viewId.split('-')[0]}`).classList.add('active');
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDate();
-            initializeEditor();
-            
-            // Set up view switching
-            document.getElementById('btn-calendar').addEventListener('click', () => switchView('calendar-view'));
-            document.getElementById('btn-timer').addEventListener('click', () => switchView('timer-view'));
-        });
-
         // Chat functionality
         function openChat() {
-            // Implement chat functionality here
-            console.log('Opening chat...');
+            const greeting = document.getElementById('greeting-message-calendar');
+            greeting.style.display = greeting.style.display === 'none' ? 'block' : 'none';
+            
+            if (greeting.style.display === 'block') {
+                const timeOfDay = new Date().getHours();
+                let greetingText = 'Good ';
+                if (timeOfDay < 12) greetingText += 'morning';
+                else if (timeOfDay < 18) greetingText += 'afternoon';
+                else greetingText += 'evening';
+                greetingText += '! How can I help you today?';
+                greeting.textContent = greetingText;
+            }
         }
 
-        // Update date every minute
-        setInterval(updateDate, 60000);
+        // Local Storage
+        function saveEditorContent() {
+            const content = document.getElementById('editor-calendar').innerHTML;
+            localStorage.setItem('calendarContent', content);
+        }
+
+        function loadEditorContent() {
+            const content = localStorage.getItem('calendarContent');
+            if (content) {
+                document.getElementById('editor-calendar').innerHTML = content;
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize date
+            updateDate();
+            setInterval(updateDate, 60000); // Update date every minute
+
+            // Initialize timer
+            setMode('pomodoro');
+            updateDisplay();
+
+            // Setup editor
+            const editor = document.getElementById('editor-calendar');
+            editor.addEventListener('input', () => {
+                processEditorContent();
+                saveEditorContent();
+            });
+
+            // Load saved content
+            loadEditorContent();
+
+            // Setup navigation
+            document.getElementById('btn-calendar').addEventListener('click', () => switchView('calendar-view'));
+            document.getElementById('btn-timer').addEventListener('click', () => switchView('timer-view'));
+
+            // Setup keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 's') {
+                        e.preventDefault();
+                        saveEditorContent();
+                    }
+                }
+            });
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed:', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
