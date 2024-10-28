@@ -53,7 +53,7 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
-            align-items: center; /* Changed to center to align circles */
+            align-items: center; /* Center items vertically */
             padding: 10px;
             box-sizing: border-box;
             position: relative;
@@ -68,6 +68,36 @@
             margin: 0;
             line-height: 1.2;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Progress Circles Styles */
+        #progress-circles {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #progress-svg {
+            width: 80px;
+            height: 80px;
+        }
+
+        .progress-circle {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+
+        #circle-need-to-do {
+            stroke: #FF6347; /* Tomato */
+        }
+
+        #circle-overall-todos {
+            stroke: #1E90FF; /* Dodger Blue */
+        }
+
+        #circle-productive-time {
+            stroke: #32CD32; /* Lime Green */
         }
 
         #editor-calendar {
@@ -324,37 +354,6 @@
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
-        /* Fitness Circles Styles */
-        #fitness-circles {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .circular-chart {
-            max-width: 80px;
-            max-height: 80px;
-            transform: rotate(-90deg); /* Rotate to start from top */
-        }
-
-        .circle {
-            fill: none;
-            stroke-width: 3;
-            stroke-linecap: round;
-        }
-
-        .red-circle {
-            stroke: #FF4500; /* Adjusted color */
-        }
-
-        .green-circle {
-            stroke: #32CD32; /* Adjusted color */
-        }
-
-        .blue-circle {
-            stroke: #1E90FF; /* Adjusted color */
-        }
-
         /* Responsive adjustments */
         @media (max-width: 480px) {
             .calendar-container, .avatar-box {
@@ -421,18 +420,12 @@
                     <div id="date-calendar"></div>
                     <div id="month-name-calendar"></div>
                 </div>
-                <!-- Fitness Circles -->
-                <div id="fitness-circles">
-                    <svg width="80" height="80" viewBox="0 0 36 36" class="circular-chart">
-                        <path class="circle red-circle" stroke-dasharray="0, 100" d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        <path class="circle green-circle" stroke-dasharray="0, 100" d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle blue-circle" stroke-dasharray="0, 100" d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <!-- Progress Circles -->
+                <div id="progress-circles">
+                    <svg id="progress-svg" width="80" height="80" viewBox="0 0 100 100">
+                        <circle class="progress-circle" id="circle-need-to-do" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle" id="circle-overall-todos" cx="50" cy="50" r="35"></circle>
+                        <circle class="progress-circle" id="circle-productive-time" cx="50" cy="50" r="30"></circle>
                     </svg>
                 </div>
                 <div id="day-name-calendar"></div>
@@ -490,20 +483,30 @@
         const fullscreenBtnCalendar = document.getElementById('fullscreen-btn-calendar');
         const headerCalendar = document.getElementById('header-calendar');
 
-        // Fitness Circles Elements
-        const redCircle = document.querySelector('.red-circle');
-        const greenCircle = document.querySelector('.green-circle');
-        const blueCircle = document.querySelector('.blue-circle');
-        const fitnessCircles = document.getElementById('fitness-circles');
+        // Progress Circles Elements
+        const circleNeedToDo = document.getElementById('circle-need-to-do');
+        const circleOverallTodos = document.getElementById('circle-overall-todos');
+        const circleProductiveTime = document.getElementById('circle-productive-time');
 
-        // Fitness Circles Variables
-        let totalNeedToDoTasks = 0;
-        let completedNeedToDoTasks = 0;
-        let totalTodos = 0;
-        let completedTodos = 0;
-        let productiveTime = parseInt(localStorage.getItem('productiveTime')) || 0; // in seconds
-        let productiveTimer = null;
-        let productiveTimeRunning = false;
+        const circumferenceNeedToDo = 2 * Math.PI * circleNeedToDo.r.baseVal.value;
+        const circumferenceOverallTodos = 2 * Math.PI * circleOverallTodos.r.baseVal.value;
+        const circumferenceProductiveTime = 2 * Math.PI * circleProductiveTime.r.baseVal.value;
+
+        circleNeedToDo.style.strokeDasharray = `${circumferenceNeedToDo} ${circumferenceNeedToDo}`;
+        circleOverallTodos.style.strokeDasharray = `${circumferenceOverallTodos} ${circumferenceOverallTodos}`;
+        circleProductiveTime.style.strokeDasharray = `${circumferenceProductiveTime} ${circumferenceProductiveTime}`;
+
+        circleNeedToDo.style.strokeDashoffset = circumferenceNeedToDo;
+        circleOverallTodos.style.strokeDashoffset = circumferenceOverallTodos;
+        circleProductiveTime.style.strokeDashoffset = circumferenceProductiveTime;
+
+        const progressCircles = document.getElementById('progress-circles');
+        progressCircles.addEventListener('click', toggleProductiveTimer);
+
+        let productiveTimeData = JSON.parse(localStorage.getItem('productiveTimeData')) || {};
+        let productiveTime = 0;
+        let productiveTimerInterval;
+        let productiveTimerStart;
 
         let longPressTimerCalendar;
         const longPressDurationCalendar = 500; // milliseconds
@@ -644,6 +647,20 @@
                 selectGreetingCalendar();
             });
 
+        function getCurrentDateKey() {
+            let currentDay = startDateCalendar;
+            let currentMonth = startMonthCalendar;
+            for (let i = 0; i < currentCanvasIndexCalendar; i++) {
+                currentDay++;
+                if (currentDay > new Date(yearCalendar, currentMonth + 1, 0).getDate()) {
+                    currentDay = 1;
+                    currentMonth++;
+                }
+            }
+            const date = new Date(yearCalendar, currentMonth, currentDay);
+            return date.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
         function updateEditorCalendar() {
             let currentDay = startDateCalendar;
             let currentMonth = startMonthCalendar;
@@ -660,14 +677,26 @@
             monthNameElementCalendar.innerText = danishMonthsCalendar[currentMonth];
             editorCalendar.innerHTML = canvasesCalendar[currentCanvasIndexCalendar];
 
-            // Update task counts and circles
-            updateTaskCounts();
-            updateCircles();
+            // Load productive time for the current date
+            const dateKey = getCurrentDateKey();
+            productiveTime = productiveTimeData[dateKey] || 0;
+            updateProgressCircles();
         }
 
         function saveCurrentCanvasCalendar() {
             canvasesCalendar[currentCanvasIndexCalendar] = editorCalendar.innerHTML;
             localStorage.setItem(canvasKeysCalendar[currentCanvasIndexCalendar], editorCalendar.innerHTML);
+
+            // Save productive time for the current date
+            if (productiveTimerInterval) {
+                clearInterval(productiveTimerInterval);
+                productiveTimerInterval = null;
+                // Add the elapsed time to productiveTime
+                productiveTime += Date.now() - productiveTimerStart;
+            }
+            const dateKey = getCurrentDateKey();
+            productiveTimeData[dateKey] = productiveTime;
+            localStorage.setItem('productiveTimeData', JSON.stringify(productiveTimeData));
         }
 
         function translateTextCalendar(text) {
@@ -726,10 +755,8 @@
                 }
                 // Save the updated content after toggling
                 saveCurrentCanvasCalendar();
-
-                // Update task counts and circles
-                updateTaskCounts();
-                updateCircles();
+                // Update progress circles
+                updateProgressCircles();
             }
         }
 
@@ -840,9 +867,8 @@
                 // Save the updated content
                 saveCurrentCanvasCalendar();
 
-                // Update task counts and circles
-                updateTaskCounts();
-                updateCircles();
+                // Update progress circles
+                updateProgressCircles();
             }
         }
 
@@ -864,10 +890,6 @@
                 if (lastChar === '.' || lastChar === '!') {
                     handleSpecialCharacterConversionCalendar(lastChar);
                 }
-
-                // Update task counts and circles
-                updateTaskCounts();
-                updateCircles();
             }, 0);
         });
 
@@ -893,71 +915,66 @@
             // Save the current canvas
             saveCurrentCanvasCalendar();
 
-            // Update task counts and circles
-            updateTaskCounts();
-            updateCircles();
+            // No delayed conversion needed
+
+            // Update progress circles
+            updateProgressCircles();
         });
+
+        // Function to update progress circles
+        function updateProgressCircles() {
+            // For "need to do" items
+            const needToDoItems = editorCalendar.querySelectorAll('.need-to-do');
+            const totalNeedToDo = needToDoItems.length;
+            const completedNeedToDo = editorCalendar.querySelectorAll('.need-to-do.completed').length;
+            const progressNeedToDo = totalNeedToDo > 0 ? completedNeedToDo / totalNeedToDo : 0;
+            const offsetNeedToDo = circumferenceNeedToDo * (1 - progressNeedToDo);
+            circleNeedToDo.style.strokeDashoffset = offsetNeedToDo;
+
+            // For overall todos
+            const todoItems = editorCalendar.querySelectorAll('.clickable');
+            const totalTodos = todoItems.length;
+            const completedTodos = editorCalendar.querySelectorAll('.clickable.completed').length;
+            const progressTodos = totalTodos > 0 ? completedTodos / totalTodos : 0;
+            const offsetOverallTodos = circumferenceOverallTodos * (1 - progressTodos);
+            circleOverallTodos.style.strokeDashoffset = offsetOverallTodos;
+
+            // For productive time
+            let totalProductiveTime = productiveTime;
+            if (productiveTimerInterval) {
+                totalProductiveTime += Date.now() - productiveTimerStart;
+            }
+            const productiveTimeProgress = Math.min(totalProductiveTime / (3 * 60 * 60 * 1000), 1); // cap at 1
+            const offsetProductiveTime = circumferenceProductiveTime * (1 - productiveTimeProgress);
+            circleProductiveTime.style.strokeDashoffset = offsetProductiveTime;
+        }
+
+        // Function to toggle productive timer
+        function toggleProductiveTimer() {
+            if (productiveTimerInterval) {
+                // Timer is running, so pause it
+                clearInterval(productiveTimerInterval);
+                productiveTimerInterval = null;
+                // Add the elapsed time to productiveTime
+                productiveTime += Date.now() - productiveTimerStart;
+                // Save the productiveTime in productiveTimeData
+                const dateKey = getCurrentDateKey();
+                productiveTimeData[dateKey] = productiveTime;
+                localStorage.setItem('productiveTimeData', JSON.stringify(productiveTimeData));
+                updateProgressCircles();
+            } else {
+                // Timer is not running, so start it
+                productiveTimerStart = Date.now();
+                productiveTimerInterval = setInterval(() => {
+                    updateProgressCircles();
+                }, 1000); // Update every second
+            }
+        }
 
         // Event listeners for navigation and clicks
         dateElementCalendar.addEventListener('click', showPreviousCanvasCalendar);
         dayNameElementCalendar.addEventListener('click', showNextCanvasCalendar);
         editorCalendar.addEventListener('click', handleClickCalendar);
-
-        // Event listener for productive time tracking
-        fitnessCircles.addEventListener('click', toggleProductiveTime);
-
-        function toggleProductiveTime() {
-            if (productiveTimeRunning) {
-                // Pause the timer
-                clearInterval(productiveTimer);
-                productiveTimeRunning = false;
-            } else {
-                // Start the timer
-                productiveTimer = setInterval(() => {
-                    productiveTime++;
-                    updateCircles();
-
-                    // Save productive time to localStorage to persist between sessions
-                    localStorage.setItem('productiveTime', productiveTime);
-
-                }, 1000);
-                productiveTimeRunning = true;
-            }
-        }
-
-        // Function to update task counts
-        function updateTaskCounts() {
-            const clickableItems = editorCalendar.querySelectorAll('.clickable');
-            totalTodos = clickableItems.length;
-            completedTodos = editorCalendar.querySelectorAll('.clickable.completed').length;
-
-            const needToDoItems = editorCalendar.querySelectorAll('.clickable.need-to-do');
-            totalNeedToDoTasks = needToDoItems.length;
-            completedNeedToDoTasks = editorCalendar.querySelectorAll('.clickable.need-to-do.completed').length;
-        }
-
-        // Function to update circles
-        function updateCircles() {
-            // Update red circle for need-to-do tasks
-            let needToDoPercentage = totalNeedToDoTasks > 0 ? (completedNeedToDoTasks / totalNeedToDoTasks) * 100 : 0;
-            setCircleProgress(redCircle, needToDoPercentage);
-
-            // Update green circle for total todos
-            let todosPercentage = totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0;
-            setCircleProgress(greenCircle, todosPercentage);
-
-            // Update blue circle for productive time
-            let productivePercentage = Math.min((productiveTime / (3 * 60 * 60)) * 100, 100);
-            setCircleProgress(blueCircle, productivePercentage);
-        }
-
-        // Function to set circle progress
-        function setCircleProgress(circle, percentage) {
-            const radius = 15.9155;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (percentage / 100) * circumference;
-            circle.style.strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-        }
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
@@ -966,15 +983,6 @@
             } else if (e.key === 'ArrowRight') {
                 showNextCanvasCalendar();
             }
-        });
-
-        // Save productive time when the page is unloaded
-        window.addEventListener('beforeunload', () => {
-            if (productiveTimeRunning) {
-                clearInterval(productiveTimer);
-                productiveTimeRunning = false;
-            }
-            localStorage.setItem('productiveTime', productiveTime);
         });
 
         setCurrentCanvasIndexCalendar();
@@ -1188,10 +1196,10 @@
             ctxTimer.clearRect(0, 0, canvasTimer.width, canvasTimer.height);
             ctxTimer.save();
             ctxTimer.translate(canvasTimer.width / 2, canvasTimer.height / 2);
-
+            
             const time = Date.now() * 0.0005;
             const radius = 135;
-
+            
             ctxTimer.beginPath();
             for (let i = 0; i < 36; i++) {
                 const angleDeg = i * 10;
@@ -1201,17 +1209,17 @@
                 const nextAngleRad = angleRad + time * 1.44;
                 const nextX = radius * Math.cos(nextAngleRad);
                 const nextY = radius * Math.sin(nextAngleRad);
-
+                
                 ctxTimer.moveTo(x, y);
                 ctxTimer.lineTo(nextX, nextY);
-
+                
                 ctxTimer.strokeStyle = `rgba(255, 255, 255, ${0.1 + 0.2 * Math.sin(time + i * 0.2)})`;
                 ctxTimer.lineWidth = 1.5;
                 ctxTimer.stroke();
             }
-
+            
             ctxTimer.restore();
-
+            
             animationFrameTimer = requestAnimationFrame(animateConnectingCircleTimer);
         }
 
