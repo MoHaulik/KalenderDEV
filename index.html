@@ -53,7 +53,7 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center; /* Changed to center */
             padding: 10px;
             box-sizing: border-box;
             position: relative;
@@ -116,6 +116,56 @@
             to {
                 text-shadow: 0 0 20px rgba(255, 0, 0, 1);
             }
+        }
+
+        /* Progress Circles Styles */
+        #progress-circles-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-circle {
+            width: 50px;
+            height: 50px;
+            position: relative;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-circle .circle-bg {
+            fill: none;
+            stroke: #eee;
+            stroke-width: 3;
+        }
+
+        .progress-circle .circle {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 0, 100;
+            transition: stroke-dasharray 0.3s ease;
+        }
+
+        #need-to-do-circle .circle {
+            stroke: #ff4d4d;
+        }
+
+        #total-todo-circle .circle {
+            stroke: #4caf50;
+        }
+
+        #productive-time-circle .circle {
+            stroke: #2196f3;
+        }
+
+        #productive-time-circle {
+            cursor: pointer;
         }
 
         /* Avatar Box Styling */
@@ -390,6 +440,48 @@
                     <div id="date-calendar"></div>
                     <div id="month-name-calendar"></div>
                 </div>
+                <!-- Progress Circles -->
+                <div id="progress-circles-container">
+                    <div class="progress-circle" id="need-to-do-circle">
+                        <svg viewBox="0 0 36 36">
+                            <path class="circle-bg"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            <path class="circle" id="need-to-do-progress"
+                                  stroke-dasharray="0, 100"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        </svg>
+                    </div>
+                    <div class="progress-circle" id="total-todo-circle">
+                        <svg viewBox="0 0 36 36">
+                            <path class="circle-bg"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            <path class="circle" id="total-todo-progress"
+                                  stroke-dasharray="0, 100"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        </svg>
+                    </div>
+                    <div class="progress-circle" id="productive-time-circle">
+                        <svg viewBox="0 0 36 36">
+                            <path class="circle-bg"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            <path class="circle" id="productive-time-progress"
+                                  stroke-dasharray="0, 100"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        </svg>
+                    </div>
+                </div>
                 <div id="day-name-calendar"></div>
                 <!-- Fullscreen Button -->
                 <button class="fullscreen-button" id="fullscreen-btn-calendar" aria-label="Toggle Fullscreen"></button>
@@ -447,6 +539,85 @@
 
         let longPressTimerCalendar;
         const longPressDurationCalendar = 500; // milliseconds
+
+        // Progress Circles
+        const needToDoProgress = document.getElementById('need-to-do-progress');
+        const totalTodoProgress = document.getElementById('total-todo-progress');
+        const productiveTimeProgress = document.getElementById('productive-time-progress');
+        const productiveTimeCircle = document.getElementById('productive-time-circle');
+
+        let isProductiveTimeRunning = false;
+        let productiveTimeStart = null;
+        let accumulatedProductiveTime = 0; // in milliseconds
+        const productiveTimeGoal = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+        let productiveTimeInterval = null;
+
+        // Load productive time from localStorage
+        if (localStorage.getItem('productiveTimeData')) {
+            const productiveTimeData = JSON.parse(localStorage.getItem('productiveTimeData'));
+            accumulatedProductiveTime = productiveTimeData.accumulatedTime || 0;
+            if (productiveTimeData.isRunning) {
+                productiveTimeStart = productiveTimeData.startTime;
+                isProductiveTimeRunning = true;
+                productiveTimeInterval = setInterval(updateProductiveTimeProgress, 1000);
+            } else {
+                isProductiveTimeRunning = false;
+            }
+            updateProductiveTimeProgress();
+        }
+
+        // Event listener for productive time circle
+        productiveTimeCircle.addEventListener('click', toggleProductiveTime);
+
+        function toggleProductiveTime() {
+            if (isProductiveTimeRunning) {
+                // Pause the timer
+                isProductiveTimeRunning = false;
+                accumulatedProductiveTime += Date.now() - productiveTimeStart;
+                clearInterval(productiveTimeInterval);
+                saveProductiveTimeData();
+            } else {
+                // Start the timer
+                isProductiveTimeRunning = true;
+                productiveTimeStart = Date.now();
+                productiveTimeInterval = setInterval(updateProductiveTimeProgress, 1000);
+                saveProductiveTimeData();
+            }
+        }
+
+        function updateProductiveTimeProgress() {
+            let totalTime = accumulatedProductiveTime;
+            if (isProductiveTimeRunning) {
+                totalTime += Date.now() - productiveTimeStart;
+            }
+            const productiveTimePercentage = Math.min((totalTime / productiveTimeGoal) * 100, 100);
+            productiveTimeProgress.setAttribute('stroke-dasharray', `${productiveTimePercentage}, 100`);
+        }
+
+        function saveProductiveTimeData() {
+            const productiveTimeData = {
+                accumulatedTime: accumulatedProductiveTime,
+                isRunning: isProductiveTimeRunning,
+                startTime: productiveTimeStart
+            };
+            localStorage.setItem('productiveTimeData', JSON.stringify(productiveTimeData));
+        }
+
+        // Function to update progress circles
+        function updateProgressCircles() {
+            // Update need-to-do progress
+            const needToDoItems = editorCalendar.querySelectorAll('.need-to-do');
+            const totalNeedToDo = needToDoItems.length;
+            const completedNeedToDo = editorCalendar.querySelectorAll('.need-to-do.completed').length;
+            const needToDoPercentage = totalNeedToDo > 0 ? (completedNeedToDo / totalNeedToDo) * 100 : 0;
+            needToDoProgress.setAttribute('stroke-dasharray', `${needToDoPercentage}, 100`);
+
+            // Update total todo progress
+            const totalTodoItems = editorCalendar.querySelectorAll('.clickable').length;
+            const completedTodos = editorCalendar.querySelectorAll('.clickable.completed').length;
+            const totalTodoPercentage = totalTodoItems > 0 ? (completedTodos / totalTodoItems) * 100 : 0;
+            totalTodoProgress.setAttribute('stroke-dasharray', `${totalTodoPercentage}, 100`);
+        }
 
         // Function to enter fullscreen
         function enterFullscreenCalendar() {
@@ -599,6 +770,7 @@
             dateElementCalendar.innerText = currentDay;
             monthNameElementCalendar.innerText = danishMonthsCalendar[currentMonth];
             editorCalendar.innerHTML = canvasesCalendar[currentCanvasIndexCalendar];
+            updateProgressCircles();
         }
 
         function saveCurrentCanvasCalendar() {
@@ -662,6 +834,7 @@
                 }
                 // Save the updated content after toggling
                 saveCurrentCanvasCalendar();
+                updateProgressCircles();
             }
         }
 
@@ -771,6 +944,7 @@
 
                 // Save the updated content
                 saveCurrentCanvasCalendar();
+                updateProgressCircles();
             }
         }
 
@@ -816,6 +990,7 @@
 
             // Save the current canvas
             saveCurrentCanvasCalendar();
+            updateProgressCircles();
 
             // No delayed conversion needed
         });
