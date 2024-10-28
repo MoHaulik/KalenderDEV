@@ -53,7 +53,7 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
-            align-items: center; /* Changed to center */
+            align-items: center; /* Changed to center to align circles */
             padding: 10px;
             box-sizing: border-box;
             position: relative;
@@ -116,56 +116,6 @@
             to {
                 text-shadow: 0 0 20px rgba(255, 0, 0, 1);
             }
-        }
-
-        /* Progress Circles Styles */
-        #progress-circles-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .progress-circle {
-            width: 50px;
-            height: 50px;
-            position: relative;
-        }
-
-        .progress-circle svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-
-        .progress-circle .circle-bg {
-            fill: none;
-            stroke: #eee;
-            stroke-width: 3;
-        }
-
-        .progress-circle .circle {
-            fill: none;
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-dasharray: 0, 100;
-            transition: stroke-dasharray 0.3s ease;
-        }
-
-        #need-to-do-circle .circle {
-            stroke: #ff4d4d;
-        }
-
-        #total-todo-circle .circle {
-            stroke: #4caf50;
-        }
-
-        #productive-time-circle .circle {
-            stroke: #2196f3;
-        }
-
-        #productive-time-circle {
-            cursor: pointer;
         }
 
         /* Avatar Box Styling */
@@ -374,6 +324,37 @@
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
+        /* Fitness Circles Styles */
+        #fitness-circles {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .circular-chart {
+            max-width: 80px;
+            max-height: 80px;
+            transform: rotate(-90deg); /* Rotate to start from top */
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .red-circle {
+            stroke: #FF4500; /* Adjusted color */
+        }
+
+        .green-circle {
+            stroke: #32CD32; /* Adjusted color */
+        }
+
+        .blue-circle {
+            stroke: #1E90FF; /* Adjusted color */
+        }
+
         /* Responsive adjustments */
         @media (max-width: 480px) {
             .calendar-container, .avatar-box {
@@ -440,47 +421,19 @@
                     <div id="date-calendar"></div>
                     <div id="month-name-calendar"></div>
                 </div>
-                <!-- Progress Circles -->
-                <div id="progress-circles-container">
-                    <div class="progress-circle" id="need-to-do-circle">
-                        <svg viewBox="0 0 36 36">
-                            <path class="circle-bg"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            <path class="circle" id="need-to-do-progress"
-                                  stroke-dasharray="0, 100"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        </svg>
-                    </div>
-                    <div class="progress-circle" id="total-todo-circle">
-                        <svg viewBox="0 0 36 36">
-                            <path class="circle-bg"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            <path class="circle" id="total-todo-progress"
-                                  stroke-dasharray="0, 100"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        </svg>
-                    </div>
-                    <div class="progress-circle" id="productive-time-circle">
-                        <svg viewBox="0 0 36 36">
-                            <path class="circle-bg"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            <path class="circle" id="productive-time-progress"
-                                  stroke-dasharray="0, 100"
-                                  d="M18 2.0845
-                                     a 15.9155 15.9155 0 0 1 0 31.831
-                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        </svg>
-                    </div>
+                <!-- Fitness Circles -->
+                <div id="fitness-circles">
+                    <svg width="80" height="80" viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle red-circle" stroke-dasharray="0, 100" d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="circle green-circle" stroke-dasharray="0, 100" d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle blue-circle" stroke-dasharray="0, 100" d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    </svg>
                 </div>
                 <div id="day-name-calendar"></div>
                 <!-- Fullscreen Button -->
@@ -537,87 +490,23 @@
         const fullscreenBtnCalendar = document.getElementById('fullscreen-btn-calendar');
         const headerCalendar = document.getElementById('header-calendar');
 
+        // Fitness Circles Elements
+        const redCircle = document.querySelector('.red-circle');
+        const greenCircle = document.querySelector('.green-circle');
+        const blueCircle = document.querySelector('.blue-circle');
+        const fitnessCircles = document.getElementById('fitness-circles');
+
+        // Fitness Circles Variables
+        let totalNeedToDoTasks = 0;
+        let completedNeedToDoTasks = 0;
+        let totalTodos = 0;
+        let completedTodos = 0;
+        let productiveTime = parseInt(localStorage.getItem('productiveTime')) || 0; // in seconds
+        let productiveTimer = null;
+        let productiveTimeRunning = false;
+
         let longPressTimerCalendar;
         const longPressDurationCalendar = 500; // milliseconds
-
-        // Progress Circles
-        const needToDoProgress = document.getElementById('need-to-do-progress');
-        const totalTodoProgress = document.getElementById('total-todo-progress');
-        const productiveTimeProgress = document.getElementById('productive-time-progress');
-        const productiveTimeCircle = document.getElementById('productive-time-circle');
-
-        let isProductiveTimeRunning = false;
-        let productiveTimeStart = null;
-        let accumulatedProductiveTime = 0; // in milliseconds
-        const productiveTimeGoal = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-        let productiveTimeInterval = null;
-
-        // Load productive time from localStorage
-        if (localStorage.getItem('productiveTimeData')) {
-            const productiveTimeData = JSON.parse(localStorage.getItem('productiveTimeData'));
-            accumulatedProductiveTime = productiveTimeData.accumulatedTime || 0;
-            if (productiveTimeData.isRunning) {
-                productiveTimeStart = productiveTimeData.startTime;
-                isProductiveTimeRunning = true;
-                productiveTimeInterval = setInterval(updateProductiveTimeProgress, 1000);
-            } else {
-                isProductiveTimeRunning = false;
-            }
-            updateProductiveTimeProgress();
-        }
-
-        // Event listener for productive time circle
-        productiveTimeCircle.addEventListener('click', toggleProductiveTime);
-
-        function toggleProductiveTime() {
-            if (isProductiveTimeRunning) {
-                // Pause the timer
-                isProductiveTimeRunning = false;
-                accumulatedProductiveTime += Date.now() - productiveTimeStart;
-                clearInterval(productiveTimeInterval);
-                saveProductiveTimeData();
-            } else {
-                // Start the timer
-                isProductiveTimeRunning = true;
-                productiveTimeStart = Date.now();
-                productiveTimeInterval = setInterval(updateProductiveTimeProgress, 1000);
-                saveProductiveTimeData();
-            }
-        }
-
-        function updateProductiveTimeProgress() {
-            let totalTime = accumulatedProductiveTime;
-            if (isProductiveTimeRunning) {
-                totalTime += Date.now() - productiveTimeStart;
-            }
-            const productiveTimePercentage = Math.min((totalTime / productiveTimeGoal) * 100, 100);
-            productiveTimeProgress.setAttribute('stroke-dasharray', `${productiveTimePercentage}, 100`);
-        }
-
-        function saveProductiveTimeData() {
-            const productiveTimeData = {
-                accumulatedTime: accumulatedProductiveTime,
-                isRunning: isProductiveTimeRunning,
-                startTime: productiveTimeStart
-            };
-            localStorage.setItem('productiveTimeData', JSON.stringify(productiveTimeData));
-        }
-
-        // Function to update progress circles
-        function updateProgressCircles() {
-            // Update need-to-do progress
-            const needToDoItems = editorCalendar.querySelectorAll('.need-to-do');
-            const totalNeedToDo = needToDoItems.length;
-            const completedNeedToDo = editorCalendar.querySelectorAll('.need-to-do.completed').length;
-            const needToDoPercentage = totalNeedToDo > 0 ? (completedNeedToDo / totalNeedToDo) * 100 : 0;
-            needToDoProgress.setAttribute('stroke-dasharray', `${needToDoPercentage}, 100`);
-
-            // Update total todo progress
-            const totalTodoItems = editorCalendar.querySelectorAll('.clickable').length;
-            const completedTodos = editorCalendar.querySelectorAll('.clickable.completed').length;
-            const totalTodoPercentage = totalTodoItems > 0 ? (completedTodos / totalTodoItems) * 100 : 0;
-            totalTodoProgress.setAttribute('stroke-dasharray', `${totalTodoPercentage}, 100`);
-        }
 
         // Function to enter fullscreen
         function enterFullscreenCalendar() {
@@ -770,7 +659,10 @@
             dateElementCalendar.innerText = currentDay;
             monthNameElementCalendar.innerText = danishMonthsCalendar[currentMonth];
             editorCalendar.innerHTML = canvasesCalendar[currentCanvasIndexCalendar];
-            updateProgressCircles();
+
+            // Update task counts and circles
+            updateTaskCounts();
+            updateCircles();
         }
 
         function saveCurrentCanvasCalendar() {
@@ -834,7 +726,10 @@
                 }
                 // Save the updated content after toggling
                 saveCurrentCanvasCalendar();
-                updateProgressCircles();
+
+                // Update task counts and circles
+                updateTaskCounts();
+                updateCircles();
             }
         }
 
@@ -944,7 +839,10 @@
 
                 // Save the updated content
                 saveCurrentCanvasCalendar();
-                updateProgressCircles();
+
+                // Update task counts and circles
+                updateTaskCounts();
+                updateCircles();
             }
         }
 
@@ -966,6 +864,10 @@
                 if (lastChar === '.' || lastChar === '!') {
                     handleSpecialCharacterConversionCalendar(lastChar);
                 }
+
+                // Update task counts and circles
+                updateTaskCounts();
+                updateCircles();
             }, 0);
         });
 
@@ -990,15 +892,72 @@
 
             // Save the current canvas
             saveCurrentCanvasCalendar();
-            updateProgressCircles();
 
-            // No delayed conversion needed
+            // Update task counts and circles
+            updateTaskCounts();
+            updateCircles();
         });
 
         // Event listeners for navigation and clicks
         dateElementCalendar.addEventListener('click', showPreviousCanvasCalendar);
         dayNameElementCalendar.addEventListener('click', showNextCanvasCalendar);
         editorCalendar.addEventListener('click', handleClickCalendar);
+
+        // Event listener for productive time tracking
+        fitnessCircles.addEventListener('click', toggleProductiveTime);
+
+        function toggleProductiveTime() {
+            if (productiveTimeRunning) {
+                // Pause the timer
+                clearInterval(productiveTimer);
+                productiveTimeRunning = false;
+            } else {
+                // Start the timer
+                productiveTimer = setInterval(() => {
+                    productiveTime++;
+                    updateCircles();
+
+                    // Save productive time to localStorage to persist between sessions
+                    localStorage.setItem('productiveTime', productiveTime);
+
+                }, 1000);
+                productiveTimeRunning = true;
+            }
+        }
+
+        // Function to update task counts
+        function updateTaskCounts() {
+            const clickableItems = editorCalendar.querySelectorAll('.clickable');
+            totalTodos = clickableItems.length;
+            completedTodos = editorCalendar.querySelectorAll('.clickable.completed').length;
+
+            const needToDoItems = editorCalendar.querySelectorAll('.clickable.need-to-do');
+            totalNeedToDoTasks = needToDoItems.length;
+            completedNeedToDoTasks = editorCalendar.querySelectorAll('.clickable.need-to-do.completed').length;
+        }
+
+        // Function to update circles
+        function updateCircles() {
+            // Update red circle for need-to-do tasks
+            let needToDoPercentage = totalNeedToDoTasks > 0 ? (completedNeedToDoTasks / totalNeedToDoTasks) * 100 : 0;
+            setCircleProgress(redCircle, needToDoPercentage);
+
+            // Update green circle for total todos
+            let todosPercentage = totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0;
+            setCircleProgress(greenCircle, todosPercentage);
+
+            // Update blue circle for productive time
+            let productivePercentage = Math.min((productiveTime / (3 * 60 * 60)) * 100, 100);
+            setCircleProgress(blueCircle, productivePercentage);
+        }
+
+        // Function to set circle progress
+        function setCircleProgress(circle, percentage) {
+            const radius = 15.9155;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+        }
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
@@ -1007,6 +966,15 @@
             } else if (e.key === 'ArrowRight') {
                 showNextCanvasCalendar();
             }
+        });
+
+        // Save productive time when the page is unloaded
+        window.addEventListener('beforeunload', () => {
+            if (productiveTimeRunning) {
+                clearInterval(productiveTimer);
+                productiveTimeRunning = false;
+            }
+            localStorage.setItem('productiveTime', productiveTime);
         });
 
         setCurrentCanvasIndexCalendar();
@@ -1220,10 +1188,10 @@
             ctxTimer.clearRect(0, 0, canvasTimer.width, canvasTimer.height);
             ctxTimer.save();
             ctxTimer.translate(canvasTimer.width / 2, canvasTimer.height / 2);
-            
+
             const time = Date.now() * 0.0005;
             const radius = 135;
-            
+
             ctxTimer.beginPath();
             for (let i = 0; i < 36; i++) {
                 const angleDeg = i * 10;
@@ -1233,17 +1201,17 @@
                 const nextAngleRad = angleRad + time * 1.44;
                 const nextX = radius * Math.cos(nextAngleRad);
                 const nextY = radius * Math.sin(nextAngleRad);
-                
+
                 ctxTimer.moveTo(x, y);
                 ctxTimer.lineTo(nextX, nextY);
-                
+
                 ctxTimer.strokeStyle = `rgba(255, 255, 255, ${0.1 + 0.2 * Math.sin(time + i * 0.2)})`;
                 ctxTimer.lineWidth = 1.5;
                 ctxTimer.stroke();
             }
-            
+
             ctxTimer.restore();
-            
+
             animationFrameTimer = requestAnimationFrame(animateConnectingCircleTimer);
         }
 
